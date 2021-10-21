@@ -8,31 +8,35 @@ using System.IO;
 using System.Threading.Tasks;
 
 namespace Autobarn.PricingClient {
-	class Program {
+	internal class Program {
 		private static readonly IConfigurationRoot config = ReadConfiguration();
-		private const string SUBSCRIBER_ID = "Autobarn.PricingClient";
+		private const string subscriberId = "Autobarn.PricingClient";
 		private static Pricer.PricerClient grpcClient;
 		private static IBus bus;
 
-		static async Task Main(string[] args) {
+		private static async Task Main() {
 			var channel = GrpcChannel.ForAddress(config["AutobarnPricingServerUrl"]);
 			grpcClient = new Pricer.PricerClient(channel);
-
 			bus = RabbitHutch.CreateBus(config.GetConnectionString("AutobarnRabbitMQ"));
-			await bus.PubSub.SubscribeAsync<NewVehicleMessage>(SUBSCRIBER_ID, HandleNewVehicleMessage);
+			await bus.PubSub.SubscribeAsync<NewVehicleMessage>(subscriberId, HandleNewVehicleMessage);
 			Console.WriteLine("Connected! Listening for NewVehicleMessage messages.");
 			Console.ReadKey(true);
 		}
 
 		private static async Task HandleNewVehicleMessage(NewVehicleMessage incomingMessage) {
+			Console.WriteLine($"Received NewVehicleMessage: {incomingMessage.ModelCode} ({incomingMessage.Color}, {incomingMessage.Year}");
 			var request = new PriceRequest {
 				ModelCode = incomingMessage.ModelCode,
 				Color = incomingMessage.Color,
 				Year = incomingMessage.Year
 			};
+			Console.Write($"Calculating price via gRPC: ");
 			var reply = await grpcClient.GetPriceAsync(request);
+			Console.WriteLine($"{reply.CurrencyCode} {reply.Price}");
 			var outgoingMessage = incomingMessage.ToNewVehiclePriceMessage(reply.Price, reply.CurrencyCode);
+			Console.WriteLine("Publishing NewVehiclePriceMessage via RabbitMQ");
 			await bus.PubSub.PublishAsync(outgoingMessage);
+			Console.WriteLine(String.Empty.PadRight(72, '='));
 		}
 
 		private static IConfigurationRoot ReadConfiguration() {
