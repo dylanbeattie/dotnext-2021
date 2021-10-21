@@ -11,15 +11,12 @@ using System.Threading.Tasks;
 namespace Autobarn.Notifier {
 	class Program {
 		private static readonly IConfigurationRoot config = ReadConfiguration();
-		private static HubConnection hub;
 		private static IBus bus;
 		private const string SUBSCRIBER = "Autobarn.Notifier";
 
 		static async Task Main(string[] args) {
 			JsonConvert.DefaultSettings = JsonSettings;
 
-			hub = new HubConnectionBuilder().WithUrl(config["AutobarnSignalRHubUrl"]).Build();
-			await hub.StartAsync();
 			Console.WriteLine("Connected to SignalR Hub.");
 			bus = RabbitHutch.CreateBus(config.GetConnectionString("AutobarnRabbitMQ"));
 			await bus.PubSub.SubscribeAsync<NewVehiclePriceMessage>(SUBSCRIBER, HandleNewVehiclePriceMessage);
@@ -30,7 +27,7 @@ namespace Autobarn.Notifier {
 		private static async Task HandleNewVehiclePriceMessage(NewVehiclePriceMessage message) {
 			var json = JsonConvert.SerializeObject(message);
 			Console.WriteLine($"Sending JSON to hub: {json}");
-			await hub.SendAsync("NotifyWebUsers", "Autobarn.Notifier", json);
+			//TODO: send JSON to hub!
 			Console.WriteLine("Sent!");
 		}
 
