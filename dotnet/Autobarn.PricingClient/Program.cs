@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 
 namespace Autobarn.PricingClient {
 	internal class Program {
+
 		private static readonly IConfigurationRoot config = ReadConfiguration();
 		private const string subscriberId = "Autobarn.PricingClient";
 		private static Pricer.PricerClient grpcClient;
@@ -38,6 +39,22 @@ namespace Autobarn.PricingClient {
 			await bus.PubSub.PublishAsync(outgoingMessage);
 			Console.WriteLine(String.Empty.PadRight(72, '='));
 		}
+
+		//public static async Task Main() {
+		//	var channel = GrpcChannel.ForAddress(config["AutobarnPricingServerUrl"]);
+		//	grpcClient = new Pricer.PricerClient(channel);
+		//	Console.WriteLine("Press a key to send a request");
+		//	while (true) {
+		//		var request = new PriceRequest {
+		//			ModelCode = "VOLKSWAGEN BEETLE",
+		//			Color = "blue",
+		//			Year = 1950 + (int)(DateTime.Now.Ticks % 71)
+		//		};
+		//		var reply = await grpcClient.GetPriceAsync(request);
+		//		Console.WriteLine($"Reply: {reply.CurrencyCode} {reply.Price}");
+		//		Console.ReadKey(false);
+		//	}
+		//}
 
 		private static IConfigurationRoot ReadConfiguration() {
 			var basePath = Directory.GetParent(AppContext.BaseDirectory).FullName;
