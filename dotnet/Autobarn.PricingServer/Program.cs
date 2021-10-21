@@ -6,7 +6,7 @@ using System;
 using System.IO;
 using System.Net;
 
-namespace Autobarn.Website {
+namespace Autobarn.PricingServer {
 	public class Program {
 		public static void Main(string[] args) {
 			CreateHostBuilder(args).Build().Run();
@@ -22,13 +22,13 @@ namespace Autobarn.Website {
 					webBuilder.ConfigureKestrel(options => {
 						var pfxPassword = Environment.GetEnvironmentVariable("UrsatilePfxPassword");
 						var https = UseCertIfAvailable(@"d:\workshop.ursatile.com\ursatile.com.pfx", pfxPassword);
-						options.ListenAnyIP(5000, listenOptions => listenOptions.Protocols = HttpProtocols.Http1AndHttp2);
-						options.Listen(IPAddress.Any, 5001, https);
+						options.ListenAnyIP(5002, listenOptions => listenOptions.Protocols = HttpProtocols.Http1AndHttp2);
+						options.Listen(IPAddress.Any, 5003, https);
 						options.AllowSynchronousIO = true;
 					});
 					webBuilder.UseStartup<Startup>();
 				}
-			);
+				);
 
 		private static Action<ListenOptions> UseCertIfAvailable(string pfxFilePath, string pfxPassword) {
 			if (File.Exists(pfxFilePath)) return listen => listen.UseHttps(pfxFilePath, pfxPassword);
